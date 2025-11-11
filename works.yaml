@@ -1,11 +1,26 @@
 table-ocr-dissertion:
-  type: Article
+  type: Thesis
   author:
     蔡桓銘
   title:
     value: "用Tesseract 結合LSTM 模型實作手填表格辨識"
     verbatim: true
   date: 2021-01-15
-  page-range: 0-46
   serial-number:
     doi: 10.6846/TKU.2021.00596
+table-ocr-medium:
+  type: Blog
+  author:
+    Johnny Chang
+  title: "使用python萃取掃描文件中的表格(一)切豆腐篇"
+  url:
+    value: https://between2058.medium.com/使用python萃取掃描文件中的表格-一-切豆腐篇-d5b65b7ec320
+  date: 2020-02-21
+dpi-proof:
+  type: Thread
+  author:
+    Willus Dotkom
+  title: "Optimal image resolution (dpi/ppi) for Tesseract 4.0.0 and eng.traineddata?"
+  url:
+    value: https://groups.google.com/g/tesseract-ocr/c/Wdh_JJwnw94/m/24JHDYQbBQAJ?pli=1
+  date: 2018-12-28

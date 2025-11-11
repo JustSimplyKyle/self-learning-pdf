@@ -34,22 +34,22 @@
 = 動機
 在尋找合適校系的過程中，我發現 #link("https://university-tw.ldkrsi.men/")[University
  TW] 所提供的分數搜尋功能非常實用。
-不過，該網站的資料更新速度並不一定與官方同步，而 *大學甄選入學委員會* 所公布的入取分數資料又多以 *圖片表格* 的形式呈現，難以直接整理或分析。
+不過，該網站的資料更新速度並不一定與官方同步，而 *大學甄選入學委員會* 所公布的錄取分數資料又多以 *圖片表格* 的形式呈現，難以直接整理或分析。
 
 因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
 
 = 資料蒐集
 
-根據 @table-ocr-dissertion，影像表格分析流程可分為以下幾個步驟：
+根據 @table-ocr-dissertion 與 @table-ocr-medium ，影像表格分析流程可分為以下幾個步驟：
 
 + *影像前處理*：對原始影像進行去噪、二值化或對比度等調整。
 + *表格分割*：偵測並標註表格的行列結構，將整體表格拆分為單元格。
 + *文字辨識*：對每個單元格進行 OCR 辨識，取得對應文字內容。
-+ *轉換輸出格式*：將最終文字結果整理成結構化資料或表格文字格式。
++ *轉換輸出格式*：將最終文字結果整理成結構化資料，如 `csv` 或 `json` 。
 
 == 純文字辨識
 
-=== #link("https://github.com/tesseract-ocr/tesseract")[`tesseract`]
+=== #link("https://github.com/tesseract-ocr/tesseract")[`Tesseract`]
 
 #grid(
   // stroke: gray,
@@ -58,13 +58,13 @@
   column-gutter: 0.5em,
   inset: .2em,
   row-gutter: 0em,
-  text[將中文文字影像直接輸入至 `tesseract` 進行辨識時，即便經過去除表格邊框等前處理步驟，仍未能有效提升辨識效果。],
+  text[將中文文字影像直接輸入 `tesseract` 進行辨識時，即使經過灰階化等前處理，辨識效果仍未明顯提升。推測原因可能在於大考中心提供的檔案 *解析度* 過低#super[@dpi-proof]，導致模型無法正確辨識文字。],
   grid(
     gutter: 8pt,
     image("figure-1.png"),
     scale(75%, reflow: true)[`tesseract figure-1.png - -l chi_tra` \ *無法* 辨識出文字]
   ),
-  text[不過，`tesseract` 在 *數字* 的辨識上表現十分精準，能穩定且無誤地擷取出 *校系代碼* 欄位的資料。],
+  text[不過，`tesseract` 在數字的辨識上表現十分精準，能穩定且無誤地擷取出校系代碼欄位的資料。],
   grid(
     gutter: 8pt,
     align(center)[#image("figure-2.png")],
@@ -72,10 +72,45 @@
   ),
 )
 
+
+#pagebreak()
 === #link("https://github.com/PaddlePaddle/PaddleOCR")[PaddleOCR]
 
+PaddleOCR 是百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
 
-#highlight[PaddleOCR] 是百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
+在大多數情況下，PaddleOCR 能夠成功辨識中文文字，其特色包括：
+
+- 少數情況下可能漏字，例如在 @failed-attempt 中僅辨識出「#highlight(fill: luma(200))[(華語文教學組)]」。
+- 純數字辨識有時也會漏字，如在 @pure-numbers 中僅辨識出「#highlight(fill: luma(200))[1012]」。
+- 對中英文混合及標點符號具有良好容錯性，大部分情況下都能正確辨識，例如在 @mixed-language 成功辨識出「#highlight(fill: luma(200))[(英文+數學A)25]」。
+
+#grid(
+  stroke: black,
+  columns: (1fr,1fr, 1fr),
+  fill: luma(200),
+  align: horizon,
+  row-gutter: .5em,
+  inset: .5em,
+)[
+  #figure(
+    image("failed-ocr.png"),
+    gap: .8em,
+    caption: []
+  ) <failed-attempt>
+][
+  #figure(
+    image("figure-2.png", height: 3%),
+    gap: .8em,
+    caption: []
+  ) <pure-numbers>
+][
+  #figure(
+    image("mixed-language.png"),
+    gap: .8em,
+    caption: []
+  ) <mixed-language>
+]
 
 
-#bibliography("works.yaml")
+
+#bibliography("works.yaml", title: "文獻參考")
