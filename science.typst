@@ -1,0 +1,81 @@
+#import "@preview/numbly:0.1.0": numbly
+
+#set text(size: 12pt, font: "Source Han Sans HC")
+#show link: set text(blue)
+
+#show raw: set text(1em*(5/4))
+#show raw: it => highlight(fill: luma(200), extent: 2pt)[#it]
+
+#set heading(
+  numbering: numbly(
+    "{1}、",
+    "{1}.{2} ",
+    "{1}.{2}.{3} ",
+    "{1}.{2}.{3}.{4} ",
+  ),
+)
+#show heading: set block(below: 1.1em)
+
+#let title(body) = [
+  #set text(size: 2.5em, weight: "bold")
+  #set align(center)
+  #rect(fill: luma(240), inset: 8pt, radius: 6pt)[
+    #body
+  ]
+]
+
+
+#grid(
+  columns: (1fr),
+  rows: (5em, 1em),
+  title[影像表格文字化的實作與學習],
+  align(center)[作者：薛詠謙]
+)
+= 動機
+在尋找合適校系的過程中，我發現 #link("https://university-tw.ldkrsi.men/")[University
+ TW] 所提供的分數搜尋功能非常實用。
+不過，該網站的資料更新速度並不一定與官方同步，而 *大學甄選入學委員會* 所公布的入取分數資料又多以 *圖片表格* 的形式呈現，難以直接整理或分析。
+
+因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
+
+= 資料蒐集
+
+根據 @table-ocr-dissertion，影像表格分析流程可分為以下幾個步驟：
+
++ *影像前處理*：對原始影像進行去噪、二值化或對比度等調整。
++ *表格分割*：偵測並標註表格的行列結構，將整體表格拆分為單元格。
++ *文字辨識*：對每個單元格進行 OCR 辨識，取得對應文字內容。
++ *轉換輸出格式*：將最終文字結果整理成結構化資料或表格文字格式。
+
+== 純文字辨識
+
+=== #link("https://github.com/tesseract-ocr/tesseract")[`tesseract`]
+
+#grid(
+  // stroke: gray,
+  columns: (5fr, 4fr),
+  align: horizon,
+  column-gutter: 0.5em,
+  inset: .2em,
+  row-gutter: 0em,
+  text[將中文文字影像直接輸入至 `tesseract` 進行辨識時，即便經過去除表格邊框等前處理步驟，仍未能有效提升辨識效果。],
+  grid(
+    gutter: 8pt,
+    image("figure-1.png"),
+    scale(75%, reflow: true)[`tesseract figure-1.png - -l chi_tra` \ *無法* 辨識出文字]
+  ),
+  text[不過，`tesseract` 在 *數字* 的辨識上表現十分精準，能穩定且無誤地擷取出 *校系代碼* 欄位的資料。],
+  grid(
+    gutter: 8pt,
+    align(center)[#image("figure-2.png")],
+    scale(75%, reflow: true)[`tesseract figure-2.png - -c tessedit_char_whitelist=0123456789` \ 成功辨識出 #highlight[011012]]
+  ),
+)
+
+=== #link("https://github.com/PaddlePaddle/PaddleOCR")[PaddleOCR]
+
+
+#highlight[PaddleOCR] 是百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
+
+
+#bibliography("works.yaml")

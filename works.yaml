@@ -1,0 +1,11 @@
+table-ocr-dissertion:
+  type: Article
+  author:
+    蔡桓銘
+  title:
+    value: "用Tesseract 結合LSTM 模型實作手填表格辨識"
+    verbatim: true
+  date: 2021-01-15
+  page-range: 0-46
+  serial-number:
+    doi: 10.6846/TKU.2021.00596
