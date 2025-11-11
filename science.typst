@@ -1,6 +1,13 @@
 #import "@preview/numbly:0.1.0": numbly
 
-#set text(size: 12pt, font: "Source Han Sans HC")
+#set text(
+  size: 12pt,
+  font: (
+    // (name: "Times New Roman", covers: "latin-in-cjk"),
+    "Source Han Sans HC",
+  )
+)
+
 #show link: set text(blue)
 
 #show raw: set text(1em*(5/4))
@@ -19,7 +26,7 @@
 #let title(body) = [
   #set text(size: 2.5em, weight: "bold")
   #set align(center)
-  #rect(fill: luma(240), inset: 8pt, radius: 6pt)[
+  #rect(fill: luma(230), inset: 8pt, radius: 6pt)[
     #body
   ]
 ]
@@ -47,12 +54,47 @@
 + *文字辨識*：對每個單元格進行 OCR 辨識，取得對應文字內容。
 + *轉換輸出格式*：將最終文字結果整理成結構化資料，如 `csv` 或 `json` 。
 
-== 純文字辨識
+== 影像預處理
+
+=== 二值化
+
+`threshold(thresh: f64)` 函式可將灰階影像轉換為純黑與純白的二值化影像。
+然而，由於中文字筆劃粗細不一，閾值 ( `thresh` ) 的設定若不恰當，可能會降低文字辨識的準確度。
+
+#grid(
+  stroke: black,
+  columns: (1fr,1fr, 1fr),
+  fill: luma(200),
+  align: horizon,
+  row-gutter: .5em,
+  inset: .5em,
+)[
+  #figure(
+    image("thersh-100.png"),
+    gap: .8em,
+    caption: [閾值=100]
+  ) <thresh-100>
+][
+  #figure(
+    image("thersh-150.png"),
+    gap: .8em,
+    caption: [閾值=150]
+  ) <thresh-150>
+][
+  #figure(
+    image("thersh-200.png"),
+    gap: .8em,
+    caption: [閾值=200]
+  ) <thresh-200>
+]
+
+因此，雖然使用 @thresh-150 的處理結果尚屬可接受，但在本次專案中，最終決定於文字辨識的預處理階段不採用二值化。
+
+== 文字辨識
 
 === #link("https://github.com/tesseract-ocr/tesseract")[`Tesseract`]
 
 #grid(
-  // stroke: gray,
   columns: (5fr, 4fr),
   align: horizon,
   column-gutter: 0.5em,
@@ -72,11 +114,9 @@
   ),
 )
 
-
-#pagebreak()
 === #link("https://github.com/PaddlePaddle/PaddleOCR")[PaddleOCR]
 
-PaddleOCR 是百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
+PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
 
 在大多數情況下，PaddleOCR 能夠成功辨識中文文字，其特色包括：
 
@@ -111,6 +151,35 @@ PaddleOCR 是百度開發的文字辨識工具，相較於 `tesseract` ，在中
   ) <mixed-language>
 ]
 
+\
+綜上所述，將 `tesseract` 用於單元格的純數字辨識，而將 PaddleOCR 作為主要文字辨識工具，似乎為最佳組合。
 
+= 操作方法
+#grid(
+  columns: (2fr,2fr),
+  align: horizon,
+  column-gutter: 2em
+)[
+根據 @standards 所示，大考中心提供的篩選標準圖表可能包含多個區塊。
+因此，需要先辨識各區域的 *外圍邊線* 並進行分割，再辨識表格內的 *分割線* ，將表格切分成單元格，最後進行 *文字辨識*，並將結果整理成結構化的 JSON 格式。
+][
+  #figure(
+    image("standards.png"),
+    gap: .8em,
+    caption: []
+  ) <standards>
+]
 
-#bibliography("works.yaml", title: "文獻參考")
+處理流程可表述如下：
+
+外圍邊線辨識 → 區域分割 → 表格邊線辨識 → 單元格分割 → 文字辨識 → 將資料結構化
+
+== 外圍邊線辨識與分割
+
+== 表格邊線辨識
+
+== 單元格分割
+
+== 資料結構化
+
+#bibliography("works.yaml", title: "參考文獻")
