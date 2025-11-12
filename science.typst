@@ -11,7 +11,13 @@
 #show link: set text(blue)
 
 #show raw: set text(1em*(5/4))
-#show raw: it => highlight(fill: luma(200), extent: 2pt)[#it]
+#show raw.where(block:false): it => highlight(fill: luma(200), extent: 2pt)[#it]
+#show raw.where(block:true): it => block(
+  fill: luma(230),
+  inset: 8pt,
+  radius: 5pt,
+  it
+)
 
 #set heading(
   numbering: numbly(
@@ -47,7 +53,7 @@
 
 = 資料蒐集
 
-根據 @table-ocr-dissertion 與 @table-ocr-medium ，影像表格分析流程可分為以下幾個步驟：
+根據 @table-ocr-dissertion 與 @table-ocr-medium ，影像表格分析流程可簡略分為以下幾個步驟：
 
 + *影像前處理*：對原始影像進行去噪、二值化或對比度等調整。
 + *表格分割*：偵測並標註表格的行列結構，將整體表格拆分為單元格。
@@ -72,23 +78,27 @@
   #figure(
     image("thersh-100.png"),
     gap: .8em,
+    supplement: "圖",
     caption: [閾值=100]
   ) <thresh-100>
 ][
   #figure(
     image("thersh-150.png"),
     gap: .8em,
+    supplement: "圖",
     caption: [閾值=150]
   ) <thresh-150>
 ][
   #figure(
     image("thersh-200.png"),
     gap: .8em,
+    supplement: "圖",
     caption: [閾值=200]
   ) <thresh-200>
 ]
 
-因此，雖然使用 @thresh-150 的處理結果尚屬可接受，但在本次專案中，最終決定於文字辨識的預處理階段不採用二值化。
+因此，雖然在此範例中使用 @thresh-150（閾值 = 150）的二值化處理結果尚可接受，
+但鑒於本專案涉及多種不同文字樣式，最終我決定在文字辨識的預處理階段不採用二值化。
 
 == 文字辨識
 
@@ -100,7 +110,7 @@
   column-gutter: 0.5em,
   inset: .2em,
   row-gutter: 0em,
-  text[將中文文字影像直接輸入 `tesseract` 進行辨識時，即使經過灰階化等前處理，辨識效果仍未明顯提升。推測原因可能在於大考中心提供的檔案 *解析度* 過低#super[@dpi-proof]，導致模型無法正確辨識文字。],
+  text[將中文文字影像直接輸入 `tesseract` 進行辨識時，即使經過灰階化等前處理，辨識效果仍不盡理想。推測原因可能在於大考中心提供的檔案 *解析度* 過低#super[@dpi-proof]，導致模型無法正確辨識文字。],
   grid(
     gutter: 8pt,
     image("figure-1.png"),
@@ -134,29 +144,32 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 )[
   #figure(
     image("failed-ocr.png"),
+    supplement: "圖",
     gap: .8em,
     caption: []
   ) <failed-attempt>
 ][
   #figure(
     image("figure-2.png", height: 3%),
+    supplement: "圖",
     gap: .8em,
     caption: []
   ) <pure-numbers>
 ][
   #figure(
     image("mixed-language.png"),
+    supplement: "圖",
     gap: .8em,
     caption: []
   ) <mixed-language>
 ]
 
-\
+=== 小結
 綜上所述，將 `tesseract` 用於單元格的純數字辨識，而將 PaddleOCR 作為主要文字辨識工具，似乎為最佳組合。
 
 = 操作方法
 #grid(
-  columns: (2fr,2fr),
+  columns: (5fr,4fr),
   align: horizon,
   column-gutter: 2em
 )[
@@ -165,16 +178,66 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 ][
   #figure(
     image("standards.png"),
+    supplement: "圖",
     gap: .8em,
     caption: []
   ) <standards>
 ]
 
-處理流程可表述如下：
+處理流程可簡述如下：
 
 外圍邊線辨識 → 區域分割 → 表格邊線辨識 → 單元格分割 → 文字辨識 → 將資料結構化
 
 == 外圍邊線辨識與分割
+
+根據 @table-ocr-dissertion，可使用 `find_contours_with_hierarchy` 函數進行直線邊緣偵測。
+然而，此方法同時會偵測到文字筆劃中的直線，導致難以準確判定外框邊界。
+
+為消除文字干擾，可採用*膨脹與腐蝕（morphological closing）*處理。
+#figure(
+```rust
+let kernel =
+    get_structuring_element(imgproc::MORPH_RECT, Size::new(20, 5), Point::new(-1, -1))?;
+
+let mut closed = Mat::default();
+
+morphology_ex(
+    &thresh,
+    &mut closed,
+    imgproc::MORPH_CLOSE,
+    &kernel,
+    Point::new(-1, -1),
+    1,
+    BORDER_CONSTANT,
+    Scalar::default(),
+)?;
+```,
+caption: [其中 `thresh` 為經過二值化的影像],
+supplement: "表"
+) <morphology>
+
+由 @morphology 和轉換過後的 @morphed-standards 可見，以長 20、寬 5 的矩形結構元素（kernel）進行運算，能有效的腐蝕掉文字，不過同時也腐蝕掉了表格。
+為保留表格結構，可將處理後的影像與原始影像進行 `bitwise_or` 運算，以刪除文字、復原表格，如 @morphed-ored-standards 所見。
+
+#grid(
+  stroke: ( thickness: 2pt, paint: black ),
+  inset: 1em,
+  columns: (1fr,1fr),
+  align: horizon,
+)[
+#figure(
+  image("standards-morphologied.png", height: 30%),
+  supplement: "圖",
+  caption: [經過腐蝕過後的圖像]
+) <morphed-standards>
+][
+#figure(
+  image("standards-morphologied-and-ored.png", height: 30%),
+  supplement: "圖",
+  caption: [經 bitwise_or 合併的圖像]
+) <morphed-ored-standards>
+]
+
 
 == 表格邊線辨識
 
