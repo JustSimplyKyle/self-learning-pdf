@@ -5,18 +5,27 @@
   font: (
     // (name: "Times New Roman", covers: "latin-in-cjk"),
     "Source Han Sans HC",
-  )
+  ),
 )
 
 #show link: set text(blue)
 
-#show raw: set text(1em*(5/4))
-#show raw.where(block:false): it => highlight(fill: luma(200), extent: 2pt)[#it]
-#show raw.where(block:true): it => block(
+
+#show figure.where(kind: image): set figure(supplement: "圖")
+#show figure.where(kind: raw): set figure(supplement: "表")
+
+#show raw.where(block: false): set text(1em * (5 / 4))
+
+#show raw.where(block: false): it => highlight(
+  fill: luma(200),
+  extent: 2pt,
+)[#it]
+
+#show raw.where(block: true): it => block(
   fill: luma(230),
   inset: 8pt,
   radius: 5pt,
-  it
+  it,
 )
 
 #set heading(
@@ -39,14 +48,14 @@
 
 
 #grid(
-  columns: (1fr),
+  columns: 1fr,
   rows: (5em, 1em),
   title[影像表格文字化的實作與學習],
   align(center)[作者：薛詠謙]
 )
 = 動機
 在尋找合適校系的過程中，我發現 #link("https://university-tw.ldkrsi.men/")[University
- TW] 所提供的分數搜尋功能非常實用。
+  TW] 所提供的分數搜尋功能非常實用。
 不過，該網站的資料更新速度並不一定與官方同步，而 *大學甄選入學委員會* 所公布的錄取分數資料又多以 *圖片表格* 的形式呈現，難以直接整理或分析。
 
 因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
@@ -69,7 +78,7 @@
 
 #grid(
   stroke: black,
-  columns: (1fr,1fr, 1fr),
+  columns: (1fr, 1fr, 1fr),
   fill: luma(200),
   align: horizon,
   row-gutter: .5em,
@@ -78,22 +87,19 @@
   #figure(
     image("thersh-100.png"),
     gap: .8em,
-    supplement: "圖",
-    caption: [閾值=100]
+    caption: [閾值=100],
   ) <thresh-100>
 ][
   #figure(
     image("thersh-150.png"),
     gap: .8em,
-    supplement: "圖",
-    caption: [閾值=150]
+    caption: [閾值=150],
   ) <thresh-150>
 ][
   #figure(
     image("thersh-200.png"),
     gap: .8em,
-    supplement: "圖",
-    caption: [閾值=200]
+    caption: [閾值=200],
   ) <thresh-200>
 ]
 
@@ -114,13 +120,20 @@
   grid(
     gutter: 8pt,
     image("figure-1.png"),
-    scale(75%, reflow: true)[`tesseract figure-1.png - -l chi_tra` \ *無法* 辨識出文字]
+    scale(
+      75%,
+      reflow: true,
+    )[`tesseract figure-1.png - -l chi_tra` \ *無法* 辨識出文字],
   ),
+
   text[不過，`tesseract` 在數字的辨識上表現十分精準，能穩定且無誤地擷取出校系代碼欄位的資料。],
   grid(
     gutter: 8pt,
     align(center)[#image("figure-2.png")],
-    scale(75%, reflow: true)[`tesseract figure-2.png - -c tessedit_char_whitelist=0123456789` \ 成功辨識出 #highlight[011012]]
+    scale(
+      75%,
+      reflow: true,
+    )[`tesseract figure-2.png - -c tessedit_char_whitelist=0123456789` \ 成功辨識出 #highlight[011012]],
   ),
 )
 
@@ -136,7 +149,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 
 #grid(
   stroke: black,
-  columns: (1fr,1fr, 1fr),
+  columns: (1fr, 1fr, 1fr),
   fill: luma(200),
   align: horizon,
   row-gutter: .5em,
@@ -144,23 +157,20 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 )[
   #figure(
     image("failed-ocr.png"),
-    supplement: "圖",
     gap: .8em,
-    caption: []
+    caption: [],
   ) <failed-attempt>
 ][
   #figure(
     image("figure-2.png", height: 3%),
-    supplement: "圖",
     gap: .8em,
-    caption: []
+    caption: [],
   ) <pure-numbers>
 ][
   #figure(
     image("mixed-language.png"),
-    supplement: "圖",
     gap: .8em,
-    caption: []
+    caption: [],
   ) <mixed-language>
 ]
 
@@ -169,18 +179,17 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 
 = 操作方法
 #grid(
-  columns: (5fr,4fr),
+  columns: (5fr, 4fr),
   align: horizon,
   column-gutter: 2em
 )[
-根據 @standards 所示，大考中心提供的篩選標準圖表可能包含多個區塊。
-因此，需要先辨識各區域的 *外圍邊線* 並進行分割，再辨識表格內的 *分割線* ，將表格切分成單元格，最後進行 *文字辨識*，並將結果整理成結構化的 JSON 格式。
+  根據 @standards 所示，來源影像包含多個表格區段，必須先將主要區塊切出，才有辦法進行更細緻的分割。
+  因此，需要先辨識各區域的 *外圍邊線* 並進行分割，再辨識表格內的 *分割線* ，將表格切分成單元格，最後進行 *文字辨識*，並將結果整理成結構化的 JSON 格式。
 ][
   #figure(
     image("standards.png"),
-    supplement: "圖",
     gap: .8em,
-    caption: []
+    caption: [],
   ) <standards>
 ]
 
@@ -193,53 +202,246 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 根據 @table-ocr-dissertion，可使用 `find_contours_with_hierarchy` 函數進行直線邊緣偵測。
 然而，此方法同時會偵測到文字筆劃中的直線，導致難以準確判定外框邊界。
 
+=== 消除文字
+
 為消除文字干擾，可採用*膨脹與腐蝕（morphological closing）*處理。
 #figure(
-```rust
-let kernel =
-    get_structuring_element(imgproc::MORPH_RECT, Size::new(20, 5), Point::new(-1, -1))?;
+  ```rust
+  let kernel =
+      get_structuring_element(imgproc::MORPH_RECT, Size::new(20, 5), Point::new(-1, -1))?;
 
-let mut closed = Mat::default();
+  let mut closed = Mat::default();
 
-morphology_ex(
-    &thresh,
-    &mut closed,
-    imgproc::MORPH_CLOSE,
-    &kernel,
-    Point::new(-1, -1),
-    1,
-    BORDER_CONSTANT,
-    Scalar::default(),
-)?;
-```,
-caption: [其中 `thresh` 為經過二值化的影像],
-supplement: "表"
+  morphology_ex(
+      &thresh,
+      &mut closed,
+      imgproc::MORPH_CLOSE,
+      &kernel,
+      Point::new(-1, -1),
+      1,
+      BORDER_CONSTANT,
+      Scalar::default(),
+  )?;
+  ```,
+  caption: [其中 `thresh` 為經過二值化的影像],
 ) <morphology>
 
 由 @morphology 和轉換過後的 @morphed-standards 可見，以長 20、寬 5 的矩形結構元素（kernel）進行運算，能有效的腐蝕掉文字，不過同時也腐蝕掉了表格。
-為保留表格結構，可將處理後的影像與原始影像進行 `bitwise_or` 運算，以刪除文字、復原表格，如 @morphed-ored-standards 所見。
+為保留表格結構，可將處理後的影像與原始影像進行 `bitwise_or` 運算，以刪除文字，如 @morphed-ored-standards 所見。
 
 #grid(
-  stroke: ( thickness: 2pt, paint: black ),
+  stroke: (thickness: 1pt, paint: luma(200)),
   inset: 1em,
-  columns: (1fr,1fr),
+  columns: (1fr, 1fr),
   align: horizon,
 )[
-#figure(
-  image("standards-morphologied.png", height: 30%),
-  supplement: "圖",
-  caption: [經過腐蝕過後的圖像]
-) <morphed-standards>
+  #figure(
+    image("standards-morphologied.png", height: 30%),
+    caption: [經過腐蝕過後的圖像],
+  ) <morphed-standards>
 ][
-#figure(
-  image("standards-morphologied-and-ored.png", height: 30%),
-  supplement: "圖",
-  caption: [經 bitwise_or 合併的圖像]
-) <morphed-ored-standards>
+  #figure(
+    image("standards-morphologied-and-ored.png", height: 30%),
+    caption: [經 bitwise_or 合併的圖像],
+  ) <morphed-ored-standards>
 ]
 
 
-== 表格邊線辨識
+=== 辨識邊線
+
+如@bitwise-not-standards 所示，將影像經由 `threshold` 函數進行二值化處理後，再執行 `bitwise_not` 運算，即可得到如 @bitwise-not-standards-picture 之結果。
+
+#grid(
+  columns: (4fr, 1fr),
+  column-gutter: 1em,
+  
+)[
+  #figure(
+    ```rust
+    let mut thresh = Mat::default();
+    threshold(&output, &mut thresh, 254.0, 255.0, THRESH_BINARY)?;
+    bitwise_not(&thresh.clone(), &mut thresh, &no_array())?;
+    ```,
+    caption: [其中 `output` 為經過 `bitwise_or` 處理過後的影像],
+  ) <bitwise-not-standards>
+][
+  #figure(
+    image("standards-morphologied-noted.png"),
+    caption: [],
+  ) <bitwise-not-standards-picture>
+]
+
+
+
+=== 分割表格區段
+
+#figure(
+  ```rust
+  let mut contours = Vector::<Vector<Point>>::new();
+  let mut hierarchy = Vector::<Vec4i>::new();
+  find_contours_with_hierarchy(
+      &thresh,
+      &mut contours,
+      &mut hierarchy,
+      imgproc::RETR_EXTERNAL,
+      imgproc::CHAIN_APPROX_SIMPLE,
+      Point::new(0, 0),
+  )?;
+  let mut blocks: Vec<Rect> = contours
+      .iter()
+      .map(|contour| {
+          let rect = imgproc::bounding_rect(&contour).unwrap();
+          let area = (rect.width * rect.height) as f64;
+          (rect, area)
+      })
+      .collect();
+
+  // sort by y-values first
+  blocks.sort_by(|a, b| a.y.cmp(&b.y).then_with(|| a.x.cmp(&b.x)));
+
+  let blocks_mat = blocks
+      .into_iter()
+      .map(|rect| Mat::roi(img, rect).map(|x| x.clone_pointee()))
+      .collect::<Result<Vec<_>, opencv::Error>>()?;
+
+  ```,
+  caption: [其中 `thresh` 為經過 `bitwise_not` 處理過後的影像]
+) <countours-split>
+
+最後如 @countours-split 所見，利用 `find_contours_with_hierarchy` 與 `Mat::roi` 即可將原影像分割成三個子區塊。
+
+#pagebreak()
+
+== 表格內部邊線辨識
+
+@table-ocr-paper 指出可透過形態學運算進行表格辨識；而 @table-ocr-dissertion 與 @table-ocr-medium 則是採用 `Canny` 邊緣檢測函數，並結合 `HoughLinesP` 霍夫直線變換進行偵測。
+經實測比較後發現，膨脹與腐蝕  所需調整的參數較少，前處理需求也更為簡化。
+
+由於本專案處理的影像並非真實拍攝結果，而是幾乎不含掃描噪點的數位圖片，
+因此形態學運算在此應用情境下更為合適。
+
+=== 前製處理
+
+#figure(
+  ```rust
+  let mut gray_inv = Mat::default();
+  bitwise_not(&gray, &mut gray_inv, &no_array())?;
+  let mut binary = Mat::default();
+  threshold(&gray_inv, &mut binary, 90.0, 255.0, THRESH_BINARY)?;
+  ```,
+  caption: [`gray` 將圖片灰白化後的圖像]
+) <pre-processing1>
+
+因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。 @pre-processing1
+
+#figure(
+  ```rust
+    let dilate_kernel = get_structuring_element(MORPH_RECT, Size::new(3, 1), Point::new(-1, -1))?;
+    let mut binary_dilated = Mat::default();
+    dilate(
+        &binary,
+        &mut binary_dilated,
+        &dilate_kernel,
+        Point::new(-1, -1),
+        1,
+        BORDER_CONSTANT,
+        morphology_default_border_value()?,
+    )?;
+  ```
+) <pre-processing2>
+
+再先進行簡單的膨脹運算，將文字變得更粗。@pre-processing2
+
+=== 偵測橫線
+#figure(
+  ```rust
+  let horizontal_kernel =
+    get_structuring_element(MORPH_RECT, Size::new(kernel_width, 1), Point::new(-1, -1))?;
+
+  let mut detected = Mat::default();
+
+  morphology_ex(
+      &binary,
+      &mut detected,
+      MORPH_OPEN,
+      &horizontal_kernel,
+      Point::new(-1, -1),
+      1,
+      BORDER_CONSTANT,
+      morphology_default_border_value()?,
+  )?;
+  ```,
+  caption: [`binary` 圖片是經過 @pre-processing1 和 @pre-processing2 處理過後的圖像]
+) <detect-h-lines>
+
+透過使用極扁的 `kernel` 並施行開運算（MORPH_OPEN），可將非橫向排列的區域轉換為背景。
+因此，調整 @detect-h-lines 中的 `kernel_width` 會影響處理結果。
+
+經測試，@kernel-width-10 與 @kernel-width-20 仍可觀察到未完全腐蝕的文字，
+最終決定將 `kernel_width` 設為 60，以確保文字完全被去除。
+
+#let widths = (10, 20, 40)
+
+  #for w in widths {
+    [
+      #figure(
+        image("kernel-width-" + str(w) + ".png"),
+        caption: [`kernel_width` = #w],
+      ) #label("kernel-width-" + str(w))
+    ]
+  }
+
+=== 偵測直線
+同樣的邏輯可以套用在直線上，而 `kernel_height` 這次設定為 40，因為有較多更短的直線。
+#figure(
+  ```rust
+  let vertical_kernel =
+    get_structuring_element(MORPH_RECT, Size::new(1, kernel_height), Point::new(-1, -1))?;
+  ```,
+  caption: []
+) 
+
+=== 統一線寬
+由於 `.data_bytes_mut()` 必須取得一塊連續記憶體，因此原本在 OpenCV 中 不是連續記憶體的列(column)，無法直接使用該方法進行操作。
+
+為了統一處理線寬，可利用矩陣轉置，將原本的列轉換為行(row)，使其變成連續的記憶體區塊，即可直接傳入 `keep_middle_line`。
+
+#figure(
+```rust
+// transpose to make columns continous
+transpose(&h_lines.clone(), &mut h_lines)?;
+for y in 0..h_lines.rows() {
+    keep_middle_line(h_lines.row_mut(y)?.data_bytes_mut()?);
+}
+transpose(&h_lines.clone(), &mut h_lines)?;
+
+for y in 0..v_lines.rows() {
+    keep_middle_line(v_lines.row_mut(y)?.data_bytes_mut()?);
+}
+```,
+caption: []
+)
+
+=== 計算相交點
+#figure(
+```rust
+let mut intersection_mat = Mat::default();
+bitwise_and(&v_lines, &h_lines, &mut intersection_mat, &no_array())?;
+
+let mut points_mat = Mat::default();
+find_non_zero(intersections_mat, &mut points_mat)?;
+
+let mut intersections = points_mat
+    .iter::<Point>()
+    .into_iter()
+    .flatten()
+    .map(|e| (e.1.x, e.1.y))
+    .collect::<Vec<_>>();
+```,
+caption: []
+) <intersection-code>
+
+根據 @intersection-code，可利用 bitwise_and 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
 
 == 單元格分割
 

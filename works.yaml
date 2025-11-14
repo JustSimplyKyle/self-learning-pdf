@@ -16,6 +16,15 @@ table-ocr-medium:
   url:
     value: https://between2058.medium.com/使用python萃取掃描文件中的表格-一-切豆腐篇-d5b65b7ec320
   date: 2020-02-21
+table-ocr-paper:
+  type: Article
+  author: [S. Mandal, S. P. Chowdhury, A. K. Das & Bhabatosh Chanda ]
+  title:
+    value: A simple and effective table detection system from document images
+    verbatim: true
+  data: 24 March 2006
+  serial-number:
+    doi: 10.1007/s10032-005-0006-5
 dpi-proof:
   type: Thread
   author:
