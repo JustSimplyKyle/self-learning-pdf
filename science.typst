@@ -317,7 +317,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 @table-ocr-paper 指出可透過形態學運算進行表格辨識；而 @table-ocr-dissertion 與 @table-ocr-medium 則是採用 `Canny` 邊緣檢測函數，並結合 `HoughLinesP` 霍夫直線變換進行偵測。
 經實測比較後發現，利用形態學運算所需調整的參數較少，前處理需求也更為簡化。
 
-由於本專案處理的影像並非真實拍攝結果，而是幾乎不含掃描噪點的數位圖片，
+由於本專案處理的影像並非真實拍攝結果，而是不含掃描噪點的數位圖片，
 因此形態學運算在此應用情境下更為合適。
 
 === 前製處理
@@ -332,7 +332,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   caption: [`gray` 將圖片灰白化後的圖像]
 ) <pre-processing1>
 
-因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。 @pre-processing1
+因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。 
 
 #figure(
   ```rust
@@ -347,10 +347,11 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
         BORDER_CONSTANT,
         morphology_default_border_value()?,
     )?;
-  ```
+  ```,
+  caption: []
 ) <pre-processing2>
 
-再先進行簡單的膨脹運算，將文字變得更粗。@pre-processing2
+再先進行簡單的膨脹運算，將文字變得更粗，如 @pre-processing2 可見。
 
 === 偵測橫線
 #figure(
@@ -441,7 +442,7 @@ let mut intersections = points_mat
 caption: []
 ) <intersection-code>
 
-根據 @intersection-code，可利用 bitwise_and 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
+根據 @intersection-code，可利用 `bitwise_and` 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
 
 == 單元格分割
 
