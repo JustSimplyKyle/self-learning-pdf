@@ -419,6 +419,19 @@ transpose(&h_lines.clone(), &mut h_lines)?;
 for y in 0..v_lines.rows() {
     keep_middle_line(v_lines.row_mut(y)?.data_bytes_mut()?);
 }
+
+fn keep_middle_line(line: &mut [u8]) {
+    let line_with_index = line.iter().copied().enumerate().collect::<Vec<_>>();
+    // if consectuive elements are the all 255, group them together
+    let consecutive_runs = line_with_index
+        .chunk_by(|(_, lhs), (_, rhs)| *lhs == 255 && *rhs == 255)
+        .filter(|x| !x.iter().rev().any(|x| x.1 == 0)); // prevents boundary condition of [255, 0]
+    line.fill(0);
+    for stride in consecutive_runs {
+        line[stride[stride.len() - 1].0] = 255;
+    }
+}
+
 ```,
 caption: []
 )
