@@ -329,24 +329,24 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   let mut binary = Mat::default();
   threshold(&gray_inv, &mut binary, 90.0, 255.0, THRESH_BINARY)?;
   ```,
-  caption: [`gray` 將圖片灰白化後的圖像]
+  caption: [`gray` 為將圖像灰白化後的圖片]
 ) <pre-processing1>
 
 因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。 
 
 #figure(
   ```rust
-    let dilate_kernel = get_structuring_element(MORPH_RECT, Size::new(3, 1), Point::new(-1, -1))?;
-    let mut binary_dilated = Mat::default();
-    dilate(
-        &binary,
-        &mut binary_dilated,
-        &dilate_kernel,
-        Point::new(-1, -1),
-        1,
-        BORDER_CONSTANT,
-        morphology_default_border_value()?,
-    )?;
+  let dilate_kernel = get_structuring_element(MORPH_RECT, Size::new(3, 1), Point::new(-1, -1))?;
+  let mut binary_dilated = Mat::default();
+  dilate(
+      &binary,
+      &mut binary_dilated,
+      &dilate_kernel,
+      Point::new(-1, -1),
+      1,
+      BORDER_CONSTANT,
+      morphology_default_border_value()?,
+  )?;
   ```,
   caption: []
 ) <pre-processing2>
