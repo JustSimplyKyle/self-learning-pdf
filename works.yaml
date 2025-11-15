@@ -18,11 +18,11 @@ table-ocr-medium:
   date: 2020-02-21
 table-ocr-paper:
   type: Article
-  author: [S. Mandal, S. P. Chowdhury, A. K. Das & Bhabatosh Chanda ]
+  author: [S. Mandal, S. P. Chowdhury, A. K. Das & Bhabatosh Chanda]
   title:
     value: A simple and effective table detection system from document images
     verbatim: true
-  data: 24 March 2006
+  date: 2006-03-24
   serial-number:
     doi: 10.1007/s10032-005-0006-5
 dpi-proof:

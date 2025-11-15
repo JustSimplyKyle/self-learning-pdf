@@ -1,22 +1,86 @@
 #import "@preview/numbly:0.1.0": numbly
 #import "@preview/timeliney:0.4.0"
 #import "@preview/colorful-boxes:1.4.3"
-
+#import "@preview/percencode:0.1.0": percent-decode
 #import colorful-boxes: *;
 
+
 #set text(
+  lang: "zh",
+  region: "tw",
   size: 12pt,
   font: (
-    // (name: "Times New Roman", covers: "latin-in-cjk"),
+    (name: "Manrope", covers: "latin-in-cjk"),
     "Source Han Sans HC",
   ),
 )
 
-#show link: set text(blue)
+#set page(numbering: numbly("{1}", "第{1}頁/共{2}頁"))
+
+#let first-line-indent = body => {
+  set par(first-line-indent: (amount: 2em, all: true))
+  body
+}
+
+#show: first-line-indent
+
+#show selector(<nonumber>): set heading(
+  numbering: none,
+)
+#show selector(<nooutline>): set heading(
+  numbering: none,
+  outlined: false,
+)
+#let noindent(body) = {
+  set par(first-line-indent: (amount: 0em))
+  body
+}
 
 
-#show figure.where(kind: image): set figure(supplement: "圖")
-#show figure.where(kind: raw): set figure(supplement: "表")
+#show outline.entry: it => {
+  if it.element.at("label", default: none) == <nonumber> {
+    return text(size: 10pt, fill: luma(100))[#it]
+    return none
+  }
+  if it.element.at("label", default: none) == <nooutline> {
+    return none
+  }
+  it
+}
+
+
+#show ref: it => {
+  let ele = it.element
+  if ele != none and ele.func() == heading {
+    let func = ele.numbering
+    let depth = counter(heading).at(it.target)
+    let out = func(..depth)
+
+    let out = " " + out.trim("、 ")
+
+    [#link(ele.location(), ele.supplement + out) #label("generated-from-ref")]
+  } else {
+    it
+  }
+}
+
+#show link: it => {
+  if it.at("label", default: none) != <generated-from-ref> {
+    return text(blue)[#it]
+  }
+  it
+}
+
+#show bibliography: it => {
+  show link: ele => {
+    if ele.at("label", default: none) == <processed> {
+      return ele
+    }
+
+    [#link(ele.dest, percent-decode(ele.body.text)) #label("processed")]
+  }
+  it
+}
 
 #show raw.where(block: false): set text(1em * (5 / 4))
 
@@ -34,10 +98,9 @@
 
 #set heading(
   numbering: numbly(
-    "{1}、",
-    "{1}.{2} ",
-    "{1}.{2}.{3} ",
-    "{1}.{2}.{3}.{4} ",
+    "{1:壹}、",
+    "{2:一}、 ",
+    "{3:（一）}",
   ),
 )
 #show heading: set block(below: 1.1em)
@@ -58,9 +121,7 @@
   align(center)[作者：薛詠謙]
 )
 
-#outline(
-  title: "大綱"
-)
+#outline()
 
 
 = 動機
@@ -71,83 +132,91 @@
 因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
 
 = 時間線
-#timeliney.timeline(
-  show-grid: true,
-  {
-    import timeliney: *
-      
-    headerline(group(([後端撰寫], 7)), group((["前端"], 3)))
-    headerline(
-      group(..range(12,19).map(n => strong("O" + str(n + 1)))),
-      group(..("O26","N01","N02").map(n => strong(n)))
-      // group(range(13,20).map(n => strong("10/" + str(n)))),
-    )
-  
-    taskgroup(
-      title: [*資料蒐集*],
-      style: (stroke: 5pt + black),
-      {
-        task(
-          "文字辨識",
-          (from: 0, to: 2),
-          style: (stroke: 2pt + gray),
-        )
-        task(
-          "OpenCV 學習",
-          (from: 1.5, to: 3),
-          style: (stroke: 2pt + gray),
-        )
-      },
-    )
 
-    taskgroup(
-      title: [*後端開發*],
-      style: (stroke: 5pt + blue),
+#figure(
+  caption: figure.caption(position: top)[#highlight(
+    fill: luma(200),
+  )[Oxx = Oct. xx, Nxx = Nov. xx]],
+  kind: table,
+)[
+  #timeliney.timeline(
+    show-grid: true,
     {
-      task("繪製表格線段", (3, 4.5), style: (stroke: 2pt + aqua))
-      task("分割成小格子", (4, 5), style: (stroke: 2pt + aqua))
-      task("利用 OCR 辨識文字", (4, 5), style: (stroke: 2pt + gray))
-      task("將其輸出成 JSON", (5, 7), style: (stroke: 2pt + aqua))
-    })
+      import timeliney: *
 
-    taskgroup(
-      title: [*成果展現*],
-      style: (stroke: 5pt + red),
-      {
-      task("將辨識過程輸出成影片", (7, 8), style: (stroke: 2pt + maroon))
-      task("利用 Dioxus 撰寫前端", (8, 10), style: (stroke: 2pt + maroon))
-    })
-    milestone(
-      at: 1.8,
-      style: (stroke: (paint: orange, dash: "densely-dash-dotted")),
-      align(center, [
-        利用 *PaddleOCR*\
-        突破中文辨識瓶頸
-      ])
-    )
+      headerline(group(([後端撰寫], 7)), group((["前端"], 3)))
+      headerline(
+        group(..range(12, 19).map(n => "O" + str(n + 1))),
+        group(..("O26", "N01", "N02")),
+        // group(range(13,20).map(n => strong("10/" + str(n)))),
+      )
 
-    milestone(
-      at: 4.5,
-      style: (stroke: (paint: purple, dash: "densely-dash-dotted")),
-      align(center, [
-        *利用形態學運算*\
-        解決表格線偵測問題
-      ])
-    )
+      taskgroup(
+        title: [*資料蒐集*],
+        style: (stroke: 5pt + black),
+        {
+          task(
+            "文字辨識",
+            (from: 0, to: 2),
+            style: (stroke: 2pt + gray),
+          )
+          task(
+            "OpenCV 學習",
+            (from: 1.5, to: 3),
+            style: (stroke: 2pt + gray),
+          )
+        },
+      )
 
-    milestone(
-      at: 10,
-      style: (stroke: (dash: "solid")),
-      align(right, [
-        *前端階段性成果達成*\
-        Nov. 2nd 2025
-      ])
-    )
+      taskgroup(
+        title: [*後端開發*],
+        style: (stroke: 5pt + blue),
+        {
+          task("繪製表格線段", (3, 4.5), style: (stroke: 2pt + aqua))
+          task("分割成小格子", (4, 5), style: (stroke: 2pt + aqua))
+          task("利用 OCR 辨識文字", (4, 5), style: (stroke: 2pt + aqua))
+          task("將其輸出成 JSON", (5, 7), style: (stroke: 2pt + aqua))
+        },
+      )
 
-  }
-)
+      taskgroup(
+        title: [*成果展現*],
+        style: (stroke: 5pt + red),
+        {
+          task("將辨識過程輸出成影片", (7, 8), style: (stroke: 2pt + maroon))
+          task("利用 Dioxus 撰寫前端", (8, 10), style: (stroke: 2pt + maroon))
+        },
+      )
+      milestone(
+        at: 1.8,
+        style: (stroke: (paint: orange, dash: "densely-dash-dotted")),
+        align(center, [
+          利用 *PaddleOCR*\
+          突破中文辨識瓶頸
+        ]),
+      )
 
-*專案現況與規劃：*
+      milestone(
+        at: 4.5,
+        style: (stroke: (paint: purple, dash: "densely-dash-dotted")),
+        align(center, [
+          *利用形態學運算*\
+          解決表格線偵測問題
+        ]),
+      )
+
+      milestone(
+        at: 10,
+        style: (stroke: (dash: "solid")),
+        align(right, [
+          *前端階段性成果達成*\
+          Nov. 2nd 2025
+        ]),
+      )
+    },
+  )
+]
+== 專案現況與規劃：<nonumber>
 
 截至 11月2日，我已完成:
 
@@ -156,14 +225,12 @@
 - 辨識過程視覺化影片
 - 前端介面開發中 (85%、剩下與大考中心結合的部分)
 
-*開發策略：*
+== 開發策略：<nonumber>
 
 我採用了 Proof-of-Concept 優先的開發方式：先快速實作核心功能
 驗證技術可行性，再回頭處理 technical debt 和程式品質優化。
 這種迭代開發策略讓我能在最短時間內，專注於最關鍵的技術挑戰
 ——表格辨識與切割的演算法實作。
-
-前端介面雖然還在開發中，但這不影響核心技術的完整性。
 
 = 資料蒐集
 
@@ -214,42 +281,45 @@
 
 == 文字辨識
 
-=== #link("https://github.com/tesseract-ocr/tesseract")[`Tesseract`]
+=== #link("https://github.com/tesseract-ocr/tesseract")[Tesseract]
 
 #grid(
   columns: (5fr, 4fr),
   align: horizon,
-  column-gutter: 0.5em,
+  column-gutter: .5em,
   inset: .2em,
-  row-gutter: 0em,
-  text[將中文文字影像直接輸入 `tesseract` 進行辨識時，即使經過灰階化等前處理，辨識效果仍不盡理想。推測原因可能在於大考中心提供的檔案 *解析度* 過低#super[@dpi-proof]，導致模型無法正確辨識文字。],
-  grid(
+  row-gutter: 1em,
+)[
+  將中文文字影像直接輸入 Tesseract 進行辨識時，即使經過灰階化等前處理，辨識效果仍不盡理想。推測原因可能在於大考中心提供的檔案 *解析度* 過低#super[@dpi-proof]，導致模型無法正確辨識文字。
+][
+  #grid(
     gutter: 8pt,
     image("figure-1.png"),
     scale(
       75%,
       reflow: true,
     )[`tesseract figure-1.png - -l chi_tra` \ *無法* 辨識出文字],
-  ),
-
-  text[不過，`tesseract` 在數字的辨識上表現十分精準，能穩定且無誤地擷取出校系代碼欄位的資料。],
-  grid(
+  )
+][
+  不過，Tesseract 在數字的辨識上表現十分精準，能穩定且無誤地擷取出校系代碼欄位的資料。
+][
+  #grid(
     gutter: 8pt,
     align(center)[#image("figure-2.png")],
     scale(
       75%,
       reflow: true,
     )[`tesseract figure-2.png - -c tessedit_char_whitelist=0123456789` \ 成功辨識出 #highlight[011012]],
-  ),
-)
+  )
+]
 
 === #link("https://github.com/PaddlePaddle/PaddleOCR")[PaddleOCR]
 
-PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在中文文字的擷取上具有顯著的提升。
+PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在中文文字的擷取上具有顯著的提升。
 
 在大多數情況下，PaddleOCR 能夠成功辨識中文文字，其特色包括：
 
-- 少數情況下可能漏字，例如在 @failed-attempt 中僅辨識出「#highlight(fill: luma(200))[(華語文教學組)]」。
+- 少數情況下可能漏字，例如在 @failed-attempt 中僅辨識出「#highlight(fill: luma(200))[（華語文教學組）]」。
 - 純數字辨識有時也會漏字，如在 @pure-numbers 中僅辨識出「#highlight(fill: luma(200))[1012]」。
 - 對中英文混合及標點符號具有良好容錯性，大部分情況下都能正確辨識，例如在 @mixed-language 成功辨識出「#highlight(fill: luma(200))[(英文+數學A)25]」。
 
@@ -301,9 +371,9 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   ) <standards>
 ]
 
-處理流程可簡述如下：
+=== 處理流程可簡述如下： <nooutline>
 
-外圍邊線辨識 → 區域分割 → 表格邊線辨識 → 單元格分割 → 文字辨識 → 將資料結構化
+#noindent[外圍邊線辨識 → 區域分割 → 表格邊線辨識 → 單元格分割 → 文字辨識 → 將資料結構化]
 
 == 外圍邊線辨識與分割
 
@@ -363,7 +433,6 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 #grid(
   columns: (4fr, 1fr),
   column-gutter: 1em,
-  
 )[
   #figure(
     ```rust
@@ -414,7 +483,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
       .collect::<Result<Vec<_>, opencv::Error>>()?;
 
   ```,
-  caption: [其中 `thresh` 為經過 `bitwise_not` 處理過後的影像]
+  caption: [其中 `thresh` 為經過 `bitwise_not` 處理過後的影像],
 ) <countours-split>
 
 最後如 @countours-split 所見，利用 `find_contours_with_hierarchy` 與 `Mat::roi` 即可將原影像分割成三個子區塊。
@@ -422,7 +491,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 #outline-colorbox(
   color: (
     fill: luma(200),
-    stroke: luma(50)
+    stroke: luma(50),
   ),
   title: [*程式架構演進：為什麼需要區域切割？*],
   width: auto,
@@ -431,9 +500,9 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 )[
   專案初期，我直接將完整影像送入 @internal-parsing 處理。
   但發現了一個問題： 來源影像包含多個表格區段，而區塊之間的 garbage data
-（標題、註解等）會干擾 @jsonize 的邏輯判斷。
+  （標題、註解文字等）會干擾 @jsonize 的邏輯判斷。
 
-  經過診斷，問題不在邊線辨識，而是*缺少預處理步驟*。因此
+  透過長久的 debug，發現問題不在邊線辨識，而是*缺少預處理步驟*。因此
   回頭開發區域切割功能。
 ]
 
@@ -455,10 +524,10 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   let mut binary = Mat::default();
   threshold(&gray_inv, &mut binary, 90.0, 255.0, THRESH_BINARY)?;
   ```,
-  caption: [`gray` 為將圖像灰白化後的圖片]
+  caption: [`gray` 為將圖像灰白化後的圖片],
 ) <pre-processing1>
 
-因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。 
+因為我們要偵測的是邊線，所以將圖像負片化能使邊線轉換成白色，較易偵測。
 
 #figure(
   ```rust
@@ -474,7 +543,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
       morphology_default_border_value()?,
   )?;
   ```,
-  caption: []
+  caption: [],
 ) <pre-processing2>
 
 再先進行簡單的膨脹運算，將文字變得更粗，如 @pre-processing2 可見。
@@ -490,10 +559,10 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   radius: 2pt,
   centering: true,
 )[
-    原本的流程直接進入橫線偵測，沒有 `dilate` 這個步驟，但由於辨識時發現有部分區域偵測出的邊緣有小瑕疵，導致後來切割單元格的時會裁到邊線，影響文字辨識。
+  原本的流程直接進入橫線偵測，沒有 `dilate` 這個步驟，但由於辨識時發現有部分區域偵測出的邊緣有小瑕疵，導致後來切割單元格的時會裁到邊線，影響文字辨識。
 
-    經過繁複 debug 過後，在二值化後增加簡單的膨脹運算，能讓邊線更
-    完整，提高辨識穩定性。
+  經過繁複 debug 過後，在二值化後增加簡單的膨脹運算，能讓邊線更
+  完整，提高辨識穩定性。
 ]
 
 === 偵測橫線
@@ -515,7 +584,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
       morphology_default_border_value()?,
   )?;
   ```,
-  caption: [`binary` 圖片是經過 @pre-processing1 和 @pre-processing2 處理過後的圖像]
+  caption: [`binary` 圖片是經過 @pre-processing1 和 @pre-processing2 處理過後的圖像],
 ) <detect-h-lines>
 
 透過使用極扁的 `kernel` 並施行開運算（MORPH_OPEN），可將非橫向排列的區域轉換為背景。
@@ -526,14 +595,14 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 
 #let widths = (10, 20, 40)
 
-  #for w in widths {
-    [
-      #figure(
-        image("kernel-width-" + str(w) + ".png"),
-        caption: [`kernel_width` = #w],
-      ) #label("kernel-width-" + str(w))
-    ]
-  }
+#for w in widths {
+  [
+    #figure(
+      image("kernel-width-" + str(w) + ".png"),
+      caption: [`kernel_width` = #w],
+    ) #label("kernel-width-" + str(w))
+  ]
+}
 
 === 偵測直線
 同樣的邏輯可以套用在直線上，而 `kernel_height` 這次設定為 40，因為有較多更短的直線。
@@ -542,91 +611,94 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
   let vertical_kernel =
     get_structuring_element(MORPH_RECT, Size::new(1, kernel_height), Point::new(-1, -1))?;
   ```,
-  caption: []
-) 
+  caption: [],
+)
 
 === 統一線寬
 由於 `.data_bytes_mut()` 必須取得一塊連續記憶體，因此原本在 OpenCV 中 不是連續記憶體的列(column)，無法直接使用該方法進行操作。
 
-為了統一處理線寬，可利用矩陣轉置，將原本的列轉換為行(row)，使其變成連續的記憶體區塊，即可直接傳入 `keep_middle_line`。
+為了統一處理線寬，可利用矩陣轉置，將原本的列(column)轉換為行(row)，使其變成連續的記憶體區塊，即可直接傳入 `keep_middle_line`。
 
 
-\
-#grid(
-  columns: (1fr,1fr),
+#block(
+  height: 1fr,
 )[
-  #stickybox(
-    rotation: -5deg,
-    width: 7cm,
+  #grid(
+    columns: (1fr, 1fr),
+    rows: 1fr,
+    align: horizon,
   )[
-    *關於矩陣轉置策略：*
+    #stickybox(
+      rotation: -5deg,
+      width: 7cm,
+    )[
+      === 關於矩陣轉置策略：<nonumber>
 
-    最初我使用 `.at(x,y)` 逐元素將列轉換成 `Vec` 進行處理。這個方法
-    可以運作，但有兩個問題：
-    1. 只能線性執行，無法平行化
-    2. 程式碼不直觀
+      最初我使用 `.at(x,y)` 逐元素將列(column)轉換成 `Vec` 進行處理。這個方法
+      可以運作，但有兩個問題：
+      1. 只能線性執行，無法平行化
+      2. 程式碼不直觀
 
-    重構時我想到：既然列不是連續的，那把整個矩陣「轉 90 度」不就行了？
-    透過矩陣轉置，原本的列變成行（連續記憶體），就能可直接操作。
-  ]
-][
-  #stickybox(
-    rotation: 5deg,
-    fill: rgb("#ffb6a6"),
-    width: 8cm,
-  )[
-  *關於為何採用 `keep_middle_line`：*
+      而在重構時想到：既然列不是連續的，那把整個矩陣轉置不就行了，把原本的列變成行（連續記憶體），就能可直接操作。
+    ]
+  ][
+    #stickybox(
+      rotation: 5deg,
+      fill: rgb("#ffb6a6"),
+      width: 8cm,
+    )[
+      === 關於為何採用 `keep_middle_line`： <nonumber>
 
-目前採用保留中間線的方案，但這並非最佳解。在部分測試案例中，保留第一行（列）或最後一行（列）的效果更好。由於本專案重點在於驗證整體技術可行性，我選擇使用較穩定的「保留中間線」策略。
+      目前採用保留中間線的方案，但這並非一定是最佳解答。在部分測試案例中，保留第一行或最後一行的效果更好。由於本專案重點在於驗證整體技術可行性，我選擇使用較穩定的「保留中間線」策略。
+    ]
   ]
 ]
-
 #figure(
-```rust
-// transpose to make columns continous
-transpose(&h_lines.clone(), &mut h_lines)?;
-for y in 0..h_lines.rows() {
-    keep_middle_line(h_lines.row_mut(y)?.data_bytes_mut()?);
-}
-transpose(&h_lines.clone(), &mut h_lines)?;
+  ```rust
+  // transpose to make columns continous
+  transpose(&h_lines.clone(), &mut h_lines)?;
+  for y in 0..h_lines.rows() {
+      keep_middle_line(h_lines.row_mut(y)?.data_bytes_mut()?);
+  }
+  transpose(&h_lines.clone(), &mut h_lines)?;
 
-for y in 0..v_lines.rows() {
-    keep_middle_line(v_lines.row_mut(y)?.data_bytes_mut()?);
-}
+  for y in 0..v_lines.rows() {
+      keep_middle_line(v_lines.row_mut(y)?.data_bytes_mut()?);
+  }
 
-fn keep_middle_line(line: &mut [u8]) {
-    let line_with_index = line.iter().copied().enumerate().collect::<Vec<_>>();
-    // if consectuive elements are the all 255, group them together
-    let consecutive_runs = line_with_index
-        .chunk_by(|(_, lhs), (_, rhs)| *lhs == 255 && *rhs == 255)
-        .filter(|x| !x.iter().rev().any(|x| x.1 == 0)); // prevents boundary condition of [255, 0]
-    line.fill(0);
-    for stride in consecutive_runs {
-        line[stride[stride.len() - 1].0] = 255;
-    }
-}
+  fn keep_middle_line(line: &mut [u8]) {
+      let line_with_index = line.iter().copied().enumerate().collect::<Vec<_>>();
+      // if consectuive elements are the all 255, group them together
+      let consecutive_runs = line_with_index
+          .chunk_by(|(_, lhs), (_, rhs)| *lhs == 255 && *rhs == 255)
+          .filter(|x| !x.iter().rev().any(|x| x.1 == 0)); // prevents boundary condition of [255, 0]
+      line.fill(0);
+      for stride in consecutive_runs {
+          line[stride[stride.len() - 1].0] = 255;
+      }
+  }
 
-```,
-caption: []
+  ```,
+  caption: [],
 )
 
-=== 計算相交點
+=== 相交點計算
 #figure(
-```rust
-let mut intersection_mat = Mat::default();
-bitwise_and(&v_lines, &h_lines, &mut intersection_mat, &no_array())?;
+  ```rust
+  let mut intersection_mat = Mat::default();
+  bitwise_and(&v_lines, &h_lines, &mut intersection_mat, &no_array())?;
 
-let mut points_mat = Mat::default();
-find_non_zero(intersections_mat, &mut points_mat)?;
+  let mut points_mat = Mat::default();
+  find_non_zero(intersections_mat, &mut points_mat)?;
 
-let mut intersections = points_mat
-    .iter::<Point>()
-    .into_iter()
-    .flatten()
-    .map(|e| (e.1.x, e.1.y))
-    .collect::<Vec<_>>();
-```,
-caption: []
+  let mut intersections = points_mat
+      .iter::<Point>()
+      .into_iter()
+      .flatten()
+      .map(|e| (e.1.x, e.1.y))
+      .collect::<Vec<_>>();
+  ```,
+  caption: [],
 ) <intersection-code>
 
 根據 @intersection-code，可利用 `bitwise_and` 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
@@ -637,4 +709,4 @@ caption: []
 
 = 我的收穫與反思
 
-#bibliography("works.yaml", title: "參考文獻")
+#bibliography("works.yaml", title: "參考文獻", style: "ieee")
