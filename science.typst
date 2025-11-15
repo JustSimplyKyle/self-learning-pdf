@@ -1,5 +1,8 @@
 #import "@preview/numbly:0.1.0": numbly
 #import "@preview/timeliney:0.4.0"
+#import "@preview/colorful-boxes:1.4.3"
+
+#import colorful-boxes: *;
 
 #set text(
   size: 12pt,
@@ -54,6 +57,12 @@
   title[影像表格文字化的實作與學習],
   align(center)[作者：薛詠謙]
 )
+
+#outline(
+  title: "大綱"
+)
+
+
 = 動機
 在尋找合適校系的過程中，我發現 #link("https://university-tw.ldkrsi.men/")[University
   TW] 所提供的分數搜尋功能非常實用。
@@ -67,7 +76,7 @@
   {
     import timeliney: *
       
-    headerline(group(([後端撰寫], 7)), group(([前端], 3)))
+    headerline(group(([後端撰寫], 7)), group((["前端"], 3)))
     headerline(
       group(..range(12,19).map(n => strong("O" + str(n + 1)))),
       group(..("O26","N01","N02").map(n => strong(n)))
@@ -105,12 +114,12 @@
       title: [*成果展現*],
       style: (stroke: 5pt + red),
       {
-      task("辨識過程輸出成影片", (7, 8), style: (stroke: 2pt + maroon))
+      task("將辨識過程輸出成影片", (7, 8), style: (stroke: 2pt + maroon))
       task("利用 Dioxus 撰寫前端", (8, 10), style: (stroke: 2pt + maroon))
     })
     milestone(
       at: 1.8,
-      style: (stroke: (paint: orange, dash: "loosely-dotted")),
+      style: (stroke: (paint: orange, dash: "densely-dash-dotted")),
       align(center, [
         利用 *PaddleOCR*\
         突破中文辨識瓶頸
@@ -145,12 +154,16 @@
 - 後端辨識引擎 (100%)
 - 表格切割與資料結構化 (100%)
 - 辨識過程視覺化影片
-- 前端介面開發中 (預計 11月底完成)
+- 前端介面開發中 (85%、剩下與大考中心結合的部分)
 
-雖然前端尚在開發，但核心的技術難題已經解決。
-這個過程讓我體會到，先攻克技術核心，再優化使用體驗的開發策略。
-簡單來說就是 Proof-Of-Concept 先寫出來，再去想之後的 tech-debt 問題。
+*開發策略：*
 
+我採用了 Proof-of-Concept 優先的開發方式：先快速實作核心功能
+驗證技術可行性，再回頭處理 technical debt 和程式品質優化。
+這種迭代開發策略讓我能在最短時間內，專注於最關鍵的技術挑戰
+——表格辨識與切割的演算法實作。
+
+前端介面雖然還在開發中，但這不影響核心技術的完整性。
 
 = 資料蒐集
 
@@ -270,6 +283,8 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 === 小結
 綜上所述，將 `tesseract` 用於單元格的純數字辨識，而將 PaddleOCR 作為主要文字辨識工具，似乎為最佳組合。
 
+== OpenCV
+
 = 操作方法
 #grid(
   columns: (5fr, 4fr),
@@ -298,6 +313,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 === 消除文字
 
 為消除文字干擾，可採用*膨脹與腐蝕（morphological closing）*處理。
+
 #figure(
   ```rust
   let kernel =
@@ -403,9 +419,26 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 
 最後如 @countours-split 所見，利用 `find_contours_with_hierarchy` 與 `Mat::roi` 即可將原影像分割成三個子區塊。
 
-#pagebreak()
+#outline-colorbox(
+  color: (
+    fill: luma(200),
+    stroke: luma(50)
+  ),
+  title: [*程式架構演進：為什麼需要區域切割？*],
+  width: auto,
+  radius: 2pt,
+  centering: true,
+)[
+  專案初期，我直接將完整影像送入 @internal-parsing 處理。
+  但發現了一個問題： 來源影像包含多個表格區段，而區塊之間的 garbage data
+（標題、註解等）會干擾 @jsonize 的邏輯判斷。
 
-== 表格內部邊線辨識
+  經過診斷，問題不在邊線辨識，而是*缺少預處理步驟*。因此
+  回頭開發區域切割功能。
+]
+
+
+== 表格內部邊線辨識 <internal-parsing>
 
 @table-ocr-paper 指出可透過形態學運算進行表格辨識；而 @table-ocr-dissertion 與 @table-ocr-medium 則是採用 `Canny` 邊緣檢測函數，並結合 `HoughLinesP` 霍夫直線變換進行偵測。
 經實測比較後發現，利用形態學運算所需調整的參數較少，前處理需求也更為簡化。
@@ -445,6 +478,23 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 ) <pre-processing2>
 
 再先進行簡單的膨脹運算，將文字變得更粗，如 @pre-processing2 可見。
+
+
+#outline-colorbox(
+  color: (
+    fill: rgb("#D4FFDC"),
+    stroke: rgb("#D4FFDC").darken(60%),
+  ),
+  title: [*撰寫歷史*],
+  width: auto,
+  radius: 2pt,
+  centering: true,
+)[
+    原本的流程直接進入橫線偵測，沒有 `dilate` 這個步驟，但由於辨識時發現有部分區域偵測出的邊緣有小瑕疵，導致後來切割單元格的時會裁到邊線，影響文字辨識。
+
+    經過繁複 debug 過後，在二值化後增加簡單的膨脹運算，能讓邊線更
+    完整，提高辨識穩定性。
+]
 
 === 偵測橫線
 #figure(
@@ -500,6 +550,37 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 `tesseract` ，在
 
 為了統一處理線寬，可利用矩陣轉置，將原本的列轉換為行(row)，使其變成連續的記憶體區塊，即可直接傳入 `keep_middle_line`。
 
+
+\
+#grid(
+  columns: (1fr,1fr),
+)[
+  #stickybox(
+    rotation: -5deg,
+    width: 7cm,
+  )[
+    *關於矩陣轉置策略：*
+
+    最初我使用 `.at(x,y)` 逐元素將列轉換成 `Vec` 進行處理。這個方法
+    可以運作，但有兩個問題：
+    1. 只能線性執行，無法平行化
+    2. 程式碼不直觀
+
+    重構時我想到：既然列不是連續的，那把整個矩陣「轉 90 度」不就行了？
+    透過矩陣轉置，原本的列變成行（連續記憶體），就能可直接操作。
+  ]
+][
+  #stickybox(
+    rotation: 5deg,
+    fill: rgb("#ffb6a6"),
+    width: 8cm,
+  )[
+  *關於為何採用 `keep_middle_line`：*
+
+目前採用保留中間線的方案，但這並非最佳解。在部分測試案例中，保留第一行（列）或最後一行（列）的效果更好。由於本專案重點在於驗證整體技術可行性，我選擇使用較穩定的「保留中間線」策略。
+  ]
+]
+
 #figure(
 ```rust
 // transpose to make columns continous
@@ -552,6 +633,8 @@ caption: []
 
 == 單元格分割
 
-== 資料結構化
+== 資料結構化 <jsonize>
+
+= 我的收穫與反思
 
 #bibliography("works.yaml", title: "參考文獻")
