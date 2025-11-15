@@ -1,4 +1,5 @@
 #import "@preview/numbly:0.1.0": numbly
+#import "@preview/timeliney:0.4.0"
 
 #set text(
   size: 12pt,
@@ -60,9 +61,101 @@
 
 因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
 
+= 時間線
+#timeliney.timeline(
+  show-grid: true,
+  {
+    import timeliney: *
+      
+    headerline(group(([後端撰寫], 7)), group(([前端], 3)))
+    headerline(
+      group(..range(12,19).map(n => strong("O" + str(n + 1)))),
+      group(..("O26","N01","N02").map(n => strong(n)))
+      // group(range(13,20).map(n => strong("10/" + str(n)))),
+    )
+  
+    taskgroup(
+      title: [*資料蒐集*],
+      style: (stroke: 5pt + black),
+      {
+        task(
+          "文字辨識",
+          (from: 0, to: 2),
+          style: (stroke: 2pt + gray),
+        )
+        task(
+          "OpenCV 學習",
+          (from: 1.5, to: 3),
+          style: (stroke: 2pt + gray),
+        )
+      },
+    )
+
+    taskgroup(
+      title: [*後端開發*],
+      style: (stroke: 5pt + blue),
+    {
+      task("繪製表格線段", (3, 4.5), style: (stroke: 2pt + aqua))
+      task("分割成小格子", (4, 5), style: (stroke: 2pt + aqua))
+      task("利用 OCR 辨識文字", (4, 5), style: (stroke: 2pt + gray))
+      task("將其輸出成 JSON", (5, 7), style: (stroke: 2pt + aqua))
+    })
+
+    taskgroup(
+      title: [*成果展現*],
+      style: (stroke: 5pt + red),
+      {
+      task("辨識過程輸出成影片", (7, 8), style: (stroke: 2pt + maroon))
+      task("利用 Dioxus 撰寫前端", (8, 10), style: (stroke: 2pt + maroon))
+    })
+    milestone(
+      at: 1.8,
+      style: (stroke: (paint: orange, dash: "loosely-dotted")),
+      align(center, [
+        利用 *PaddleOCR*\
+        突破中文辨識瓶頸
+      ])
+    )
+
+    milestone(
+      at: 4.5,
+      style: (stroke: (paint: purple, dash: "densely-dash-dotted")),
+      align(center, [
+        *利用形態學運算*\
+        解決表格線偵測問題
+      ])
+    )
+
+    milestone(
+      at: 10,
+      style: (stroke: (dash: "solid")),
+      align(right, [
+        *前端階段性成果達成*\
+        Nov. 2nd 2025
+      ])
+    )
+
+  }
+)
+
+*專案現況與規劃：*
+
+截至 11月2日，我已完成:
+
+- 後端辨識引擎 (100%)
+- 表格切割與資料結構化 (100%)
+- 辨識過程視覺化影片
+- 前端介面開發中 (預計 11月底完成)
+
+雖然前端尚在開發，但核心的技術難題已經解決。
+這個過程讓我體會到，先攻克技術核心，再優化使用體驗的開發策略。
+簡單來說就是 Proof-Of-Concept 先寫出來，再去想之後的 tech-debt 問題。
+
+
 = 資料蒐集
 
-根據 @table-ocr-dissertion 與 @table-ocr-medium ，影像表格分析流程可簡略分為以下幾個步驟：
+在有了這個想法之後，大約花了一個禮拜做資料蒐集，尋找是否有前人所做之成果。
+在閱讀了 @table-ocr-dissertion 與 @table-ocr-medium 之後，我將影像表格分析流程簡略分為以下幾個步驟：
 
 + *影像前處理*：對原始影像進行去噪、二值化或對比度等調整。
 + *表格分割*：偵測並標註表格的行列結構，將整體表格拆分為單元格。
