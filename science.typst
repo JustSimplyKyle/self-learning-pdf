@@ -38,16 +38,16 @@
 
 
 #show outline.entry: it => {
+  if it.at("label", default: none) == <processed> {
+    return it
+  }
+
   if it.element.at("label", default: none) == <nonumber> {
-    return text(size: 10pt, fill: luma(100))[#it]
-    return none
+    return [#text(size: 10pt, fill: luma(100))[#outline.entry(it.level*2 - 1, fill: it.fill)[#it.element]  #label("processed")]]
   }
-  if it.element.at("label", default: none) == <nooutline> {
-    return none
-  }
+
   it
 }
-
 
 #show ref: it => {
   let ele = it.element
@@ -131,10 +131,17 @@
 
 因此，我產生了想要將影像表格轉換成可數位化利用文字資料的想法，因此，我開始學習 *OCR*（光學文字辨識）技術，並嘗試實現影像中文字資料的自動化擷取與轉換。
 
-= 時間線
+#stack(
+  dir: ltr
+)[
+  = 時間線(甘特圖)
+][
+  #footnote()[平日每天約莫花#highlight[兩小時]、週末每天約莫花#highlight(fill: rgb("#ffb6a6"))[六小時]在開發與資料蒐集上。]
+]
 
 #figure(
-  caption: figure.caption(position: top)[#highlight(
+  caption: figure.caption(position: top)[
+  #highlight(
     fill: luma(200),
   )[Oxx = Oct. xx, Nxx = Nov. xx]],
   kind: table,
@@ -147,7 +154,7 @@
       headerline(group(([後端撰寫], 7)), group((["前端"], 3)))
       headerline(
         group(..range(12, 19).map(n => "O" + str(n + 1))),
-        group(..("O26", "N01", "N02")),
+        group(..("O26", "N01", "N02" )),
         // group(range(13,20).map(n => strong("10/" + str(n)))),
       )
 
@@ -172,7 +179,7 @@
         title: [*後端開發*],
         style: (stroke: 5pt + blue),
         {
-          task("繪製表格線段", (3, 4.5), style: (stroke: 2pt + aqua))
+          task("繪製表格線段", (3, 4), style: (stroke: 2pt + aqua))
           task("分割成小格子", (4, 5), style: (stroke: 2pt + aqua))
           task("利用 OCR 辨識文字", (4, 5), style: (stroke: 2pt + aqua))
           task("將其輸出成 JSON", (5, 7), style: (stroke: 2pt + aqua))
@@ -197,7 +204,7 @@
       )
 
       milestone(
-        at: 4.5,
+        at: 4,
         style: (stroke: (paint: purple, dash: "densely-dash-dotted")),
         align(center, [
           *利用形態學運算*\
@@ -215,17 +222,20 @@
       )
     },
   )
-]
-== 專案現況與規劃：<nonumber>
+] 
+
+
+
+== 專案現況與規劃：<nooutline>
 
 截至 11月2日，我已完成:
 
 - 後端辨識引擎 (100%)
 - 表格切割與資料結構化 (100%)
-- 辨識過程視覺化影片
+- #link("https://github.com/user-attachments/assets/f0a7a20c-26a8-4444-b13b-c949c3f653c9")[辨識過程視覺化影片]
 - 前端介面開發中 (85%、剩下與大考中心結合的部分)
 
-== 開發策略：<nonumber>
+== 開發策略：<nooutline>
 
 我採用了 Proof-of-Concept 優先的開發方式：先快速實作核心功能
 驗證技術可行性，再回頭處理 technical debt 和程式品質優化。
@@ -234,7 +244,7 @@
 
 = 資料蒐集
 
-在有了這個想法之後，大約花了一個禮拜做資料蒐集，尋找是否有前人所做之成果。
+在有了這個想法之後，大約花了週末左右做資料蒐集，尋找是否有前人所做之成果。
 在閱讀了 @table-ocr-dissertion 與 @table-ocr-medium 之後，我將影像表格分析流程簡略分為以下幾個步驟：
 
 + *影像前處理*：對原始影像進行去噪、二值化或對比度等調整。
@@ -277,7 +287,7 @@
 ]
 
 因此，雖然在此範例中使用 @thresh-150（閾值 = 150）的二值化處理結果尚可接受，
-但鑒於本專案涉及多種不同文字樣式，最終我決定在文字辨識的預處理階段不採用二值化。
+但鑒於本專案涉及不同文字樣式，最終我決定在文字辨識的預處理階段#highlight(fill: aqua.lighten(30%))[不採用二值化]。
 
 == 文字辨識
 
@@ -319,9 +329,9 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 
 在大多數情況下，PaddleOCR 能夠成功辨識中文文字，其特色包括：
 
+- 對中英文混合及標點符號具有良好容錯性，大部分情況下都能正確辨識，例如在 @mixed-language 成功辨識出「#highlight(fill: luma(200))[(英文+數學A)25]」。
 - 少數情況下可能漏字，例如在 @failed-attempt 中僅辨識出「#highlight(fill: luma(200))[（華語文教學組）]」。
 - 純數字辨識有時也會漏字，如在 @pure-numbers 中僅辨識出「#highlight(fill: luma(200))[1012]」。
-- 對中英文混合及標點符號具有良好容錯性，大部分情況下都能正確辨識，例如在 @mixed-language 成功辨識出「#highlight(fill: luma(200))[(英文+數學A)25]」。
 
 #grid(
   stroke: black,
@@ -353,7 +363,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 === 小結
 綜上所述，將 `tesseract` 用於單元格的純數字辨識，而將 PaddleOCR 作為主要文字辨識工具，似乎為最佳組合。
 
-== OpenCV
+
 
 = 操作方法
 #grid(
@@ -488,22 +498,20 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 
 最後如 @countours-split 所見，利用 `find_contours_with_hierarchy` 與 `Mat::roi` 即可將原影像分割成三個子區塊。
 
-#outline-colorbox(
+#slanted-colorbox(
   color: (
     fill: luma(200),
     stroke: luma(50),
   ),
-  title: [*程式架構演進：為什麼需要區域切割？*],
+  title: [=== 程式架構演進：為什麼需要區域切割？ <nonumber>],
   width: auto,
   radius: 2pt,
-  centering: true,
 )[
-  專案初期，我直接將完整影像送入 @internal-parsing 處理。
+  專案初期，我是直接將完整影像送入 @internal-parsing 處理。
   但發現了一個問題： 來源影像包含多個表格區段，而區塊之間的 garbage data
   （標題、註解文字等）會干擾 @jsonize 的邏輯判斷。
 
-  透過長久的 debug，發現問題不在邊線辨識，而是*缺少預處理步驟*。因此
-  回頭開發區域切割功能。
+  透過長久的 debug，發現問題不在邊線辨識，而是*缺少預處理步驟*。因此回頭開發區域切割功能。
 ]
 
 
@@ -554,7 +562,7 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
     fill: rgb("#D4FFDC"),
     stroke: rgb("#D4FFDC").darken(60%),
   ),
-  title: [*撰寫歷史*],
+  title: [=== 撰寫歷史 <nonumber>],
   width: auto,
   radius: 2pt,
   centering: true,
@@ -647,9 +655,9 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
       fill: rgb("#ffb6a6"),
       width: 8cm,
     )[
-      === 關於為何採用 `keep_middle_line`： <nonumber>
+      === 關於為何採用 `keep_last_line`： <nonumber>
 
-      目前採用保留中間線的方案，但這並非一定是最佳解答。在部分測試案例中，保留第一行或最後一行的效果更好。由於本專案重點在於驗證整體技術可行性，我選擇使用較穩定的「保留中間線」策略。
+      目前採用保留最後一行的方案，但這並非一定是最佳解答。在部分測試案例中，保留第一行或中間那行的效果更好。由於本專案重點在於驗證整體技術可行性，我選擇使用較穩定的「保留最後一行」策略。
     ]
   ]
 ]
@@ -658,20 +666,22 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
   // transpose to make columns continous
   transpose(&h_lines.clone(), &mut h_lines)?;
   for y in 0..h_lines.rows() {
-      keep_middle_line(h_lines.row_mut(y)?.data_bytes_mut()?);
+      keep_last_line(h_lines.row_mut(y)?.data_bytes_mut()?);
   }
   transpose(&h_lines.clone(), &mut h_lines)?;
 
   for y in 0..v_lines.rows() {
-      keep_middle_line(v_lines.row_mut(y)?.data_bytes_mut()?);
+      keep_last_line(v_lines.row_mut(y)?.data_bytes_mut()?);
   }
 
-  fn keep_middle_line(line: &mut [u8]) {
+  fn keep_last_line(line: &mut [u8]) {
       let line_with_index = line.iter().copied().enumerate().collect::<Vec<_>>();
+
       // if consectuive elements are the all 255, group them together
       let consecutive_runs = line_with_index
           .chunk_by(|(_, lhs), (_, rhs)| *lhs == 255 && *rhs == 255)
-          .filter(|x| !x.iter().rev().any(|x| x.1 == 0)); // prevents boundary condition of [255, 0]
+          // prevents boundary condition of [255, 0]
+          .filter(|x| !x.iter().rev().any(|x| x.1 == 0)); 
       line.fill(0);
       for stride in consecutive_runs {
           line[stride[stride.len() - 1].0] = 255;
@@ -683,6 +693,20 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 )
 
 === 相交點計算
+根據 @intersection-code，可利用 `bitwise_and` 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
+
+#colorbox(
+  title: [=== 布林運算的好用之處 <nonumber>],
+  color: "blue",
+  radius: 8pt,
+  width: auto,
+)[
+  最初用雙層 for 迴圈逐步檢查像素交點，這種 imperative 的寫法雖然簡單但巢狀層級過深，回頭閱讀時會增加認知複雜度。重構時想到：既然有 `bitwise_and`， 何不直接計算交點？然後再利用 OpenCV  所提供的 `iter()` 函數，即可在無 nesting 的方式，撰寫出效果相同，但更直觀、更好理解的程式碼。
+
+
+  這次重構利用了 「Never Nester」原則#footnote[#link("https://www.youtube.com/watch?v=CFRhGnuXG-4")[Why You Shouldn\'t Nest Your Code] by CodeAesthetic]：透過提前返回、 Declarative Coding 等概念和API的善用，將多層巢狀迴圈轉換為清晰的 pipeline，降低閱讀程式碼時的認知負荷。
+]
+
 #figure(
   ```rust
   let mut intersection_mat = Mat::default();
@@ -697,13 +721,163 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
       .flatten()
       .map(|e| (e.1.x, e.1.y))
       .collect::<Vec<_>>();
+
   ```,
   caption: [],
 ) <intersection-code>
 
-根據 @intersection-code，可利用 `bitwise_and` 計算線條的交點。然而，交點結果儲存在 `Mat` 影像中，不易直接運用。因此，使用 `find_non_zero` 將非零像素（即交點）轉換為 `Vec<Point>`，以便後續處理。
 
 == 單元格分割
+
+#grid(
+  columns: (2fr, 1fr, 1fr),
+  inset: 1em,
+  rows: 15%,
+  align: horizon, 
+)[
+  大部分文獻所提供的分割方法都是存在表格為「整齊」的前提下撰寫的，而如此的切割方法(@naive)假如遇到如 @right-aligned-png 或 @left-aligned-png 的情況就會無法將完整的單元格切割出來。
+][
+  #move(
+    dy: .75em
+  )[
+  #figure(
+    image("right-vertical-line.png"),
+    caption: []
+  ) <right-aligned-png>,
+  ]
+][
+  #figure(
+    image("left-vertical-line.png"),
+    caption: []
+  ) <left-aligned-png>
+]
+
+=== 原始演算法
+
+@naive 對左邊有三個交點的單元格(@left-aligned-png)有效，但對右邊有三個交點的單元格(@right-aligned-png)卻會失效。
+
+#figure(
+[```rust
+intersections.sort_unstable();
+
+// 使得每個窗口都必須是同一列(column)
+let iter = intersections.windows(2).filter(|w| w[0].0 == w[1].0);
+
+for window in iter {
+    let [top_left, bottom_left] = window else {
+        unreachable!()
+    };
+
+    let bottom_right = (bottom_left.0 + 1..max_x)
+        .find(|e| table.contains(&(*e, bottom_left.1)))
+        .map(|x| (x, bottom_left.1));
+
+        
+    let cell = Mat::roi(gray, Rect::from_points(top_left, bottom_right))?;
+  
+}
+
+```
+#place(
+  horizon + right,
+  dx: 65pt,
+  dy: -15pt,
+)[
+  #stickybox(
+    rotation: 5deg,
+    fill: rgb("#b5dcff"),
+    width: 6cm,
+  )[
+    #align(left)[
+      #block(below: 1em)[
+        === 原始演算法簡介 <nonumber> 
+      ]
+      #noindent[採用逐列掃描（滑動窗口，每次取 2 個元素）：取左上和左下兩點，從左下向右搜尋右下角。] 
+    ]
+  ] 
+  
+]
+],
+  caption: [Naive implementation]
+) <naive>
+
+
+解決這個問題最「標準」的方法是判別目前的格子到底是在 @left-aligned-png 還是 @right-aligned-png 的情況，但我有想到一個能避免複雜判斷的方式。
+
+=== 最終演算法：
+1. 利用滑動窗口(@naive)得知左上、左下兩點
+2. 向右搜尋右上、右下兩點（@left-to-right-parse）
+3. 形成兩個候選矩形並比較面積（@biggest-bounding-box）
+4. 取較大者作為單元格邊界
+
+#figure(
+  ```rust
+  let top_right = (top_left.0 + 1..max_x)
+      .find(|e| table.contains(&(*e, top_left.1)))
+      .map(|x| (x, top_left.1));
+
+  let bottom_right = (bottom_left.0 + 1..max_x)
+      .find(|e| table.contains(&(*e, bottom_left.1)))
+      .map(|x| (x, bottom_left.1));
+  ```,
+  caption: []
+) <left-to-right-parse>
+
+#figure(
+  ```rust
+  fn get_biggest_possible_bounding_box(
+      [top_left, top_right, bottom_left, bottom_right]: [Point_<i32>; 4],
+  ) -> Rect_<i32> {
+      let rect1 = Rect::from_points(
+          (bottom_left.x, bottom_left.y).into(),
+          (top_right.x, top_right.y).into(),
+      );
+
+      let rect2 = Rect::from_points(
+          (top_left.x, top_left.y).into(),
+          (bottom_right.x, bottom_right.y).into(),
+      );
+
+      if rect1 > rect2 {
+          rect1
+      } else {
+          rect2
+      }
+  }
+  ```,
+  caption: []
+) <biggest-bounding-box>
+
+
+
+#block(
+  height: 1fr,
+)[
+  #grid(
+    columns: (1fr, 1fr),
+    rows: 1fr,
+    align: horizon,
+  )[
+    #stickybox(
+      rotation: -5deg,
+      fill: aqua.lighten(70%),
+      width: 7cm,
+    )[
+      在#link("https://github.com/user-attachments/assets/f0a7a20c-26a8-4444-b13b-c949c3f653c9")[視覺化影片]中，可以看到在招生名額(0:09)、檢定標準(0:12)等單元格都正確判斷。
+
+    ]
+  ][
+    #stickybox(
+      rotation: 5deg,
+      fill: rgb("#33ff57").lighten(70%),
+      width: 8cm,
+    )[
+      === 文字辨識： <nonumber>
+
+      在經 `Mat::roi` 獲得單元格，輸出成圖片檔給 PaddleOCR 做辨識後即可獲取到中文文字，至於何時會使用到 Tesseract 則會在 @jsonize 時詳細描述。
+    ]
+  ]
+]
 
 == 資料結構化 <jsonize>
 
