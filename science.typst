@@ -924,7 +924,12 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 
 
   edge((0, 2), (-2, 2), "-|>", label-pos: 0.3),
-  node((-2, 2), [State::Filters\ 儲存其對應科目], shape: rect, fill: red.lighten(80%)),
+  node(
+    (-2, 2),
+    [State::Filters\ 儲存其對應科目],
+    shape: rect,
+    fill: red.lighten(80%),
+  ),
 
   edge((0, 2), (2, 2), "-|>", label-pos: 0.3),
   node(
@@ -935,10 +940,20 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
   ),
 
   edge((0, 2), (-2, 4), "-|>", label-pos: 0.3),
-  node((-2, 4), [State::Standards\ 儲存其對應科目], shape: rect, fill: red.lighten(80%)),
+  node(
+    (-2, 4),
+    [State::Standards\ 儲存其對應科目],
+    shape: rect,
+    fill: red.lighten(80%),
+  ),
 
   edge((0, 2), (2, 4), "-|>", label-pos: 0.3),
-  node((2, 4), [State::MinimumRate\ 儲存其對應], shape: rect, fill: red.lighten(80%)),
+  node(
+    (2, 4),
+    [State::MinimumRate\ 儲存至對應第幾篩選],
+    shape: rect,
+    fill: red.lighten(80%),
+  ),
 
   edge((0, 2), (-2, 0), "-|>", label-pos: 0.3),
   node(
@@ -1012,9 +1027,9 @@ PaddleOCR 是由百度開發的文字辨識工具，相較於 Tesseract ，在�
 
 這個專案讓我對電腦視覺和影像處理產生興趣。未來不管是利用學習更多形態學運算的應用，還是圖像演算法的開發都是可以精進自己的方向。
 
-更重要的是，這次經驗讓我確定：我喜歡用程式解決真實問題。在高三學測的壓力下，這個專案成了我唯一的避風港。當我 debug 到凌晨，當我看到表格終於被正確切割，當我發現用 `bitwise_and` 就能優雅解決問題時——那種成就感，讓我忘記了考試的焦慮。
+更重要的是，這次經驗讓我確定：我喜歡用程式解決*真實問題*。在高三學測的壓力下，這個專案成了我唯一的避風港。當我 debug 到凌晨，當我看到表格終於被正確切割，當我發現用 `bitwise_and` 就能優雅解決問題時——那種成就感，讓我忘記了考試的焦慮。
 
-從發現問題（University TW 資料更新慢）到實作解決方案， 整個過程充滿挑戰但也很有成就感。這正是我想在資工系深入學習的—— 用技術創造價值，解決實際問題。#highlight(fill: red.lighten(80%))[不是為了考試而學，而是因為真心喜歡]，這才是我選擇資工系的原因。
+從發現問題（University TW 資料更新慢）到實作解決方案， 整個過程充滿挑戰但也很有成就感。這正是我想在資訊相關科系系深入學習的——用技術創造價值，解決實際問題。#highlight(fill: red.lighten(80%))[不是為了考試而學，而是因為真心喜歡]。
 
 
 #bibliography("works.yaml", title: "參考文獻", style: "ieee")
